@@ -1,4 +1,4 @@
-classdef StructEditorApp < handle & ...
+classdef StructEditorApp < matlab.apps.AppBase & ...
         matlab.mixin.SetGetExactNames & ...
         structeditor.mixin.HasTheme
     
@@ -113,6 +113,9 @@ classdef StructEditorApp < handle & ...
             % Step 2: Create UI components
             obj.setup()
 
+            % Register app in MATLAB App Management (AppBase lifecycle)
+            registerApp(obj, obj.UIFigure);
+
             % Step 3: Initialize theme AFTER figure is created
             % This automatically handles both R2025a+ and legacy versions
             obj.initializeTheme(obj.UIFigure, theme);
@@ -132,17 +135,20 @@ classdef StructEditorApp < handle & ...
         function delete(obj)
             % Clean up theme manager
             %obj.cleanupTheme();
-            
+
             if ~isempty(obj.UIFigure) && isvalid(obj.UIFigure)
                 uiresume(obj.UIFigure)
-                
+
                 drawnow
                 pause(0.05)
-                
+
                 delete(obj.UIControlContainers)
                 delete(obj.Footer)
                 delete(obj.UIFigure)
             end
+
+            % Ensure the app unregisters from AppBase bookkeeping
+            delete@matlab.apps.AppBase(obj)
         end
     end
 

@@ -15,6 +15,10 @@ A MATLAB app for interactively editing structure data in a dialog-style window. 
 
 ___
 
+## Architecture
+
+- `structeditor.StructEditorApp` now inherits from `matlab.apps.AppBase`, so the main editor dialog follows MATLAB App Designer lifecycle conventions while preserving the existing `uiform(...)` API.
+
 ## Features
 
 - **Automatic UI Generation**: Automatically creates appropriate UI controls based on field data types
@@ -171,6 +175,14 @@ completedFeedback = uiform(feedback, ...
   </picture>
 </p>
 
+
+### App Designer copy/paste extraction
+If you only want the editable field area (controls in a scrollable layout) for your own App Designer app, use the standalone helper:
+
+- `code/examples/createStructFieldEditor.m`
+- Demo usage: `code/examples/example_4_appdesigner_extract.m`
+
+This helper creates labels + editable components for struct fields (`char`, `string`, numeric, integer, logical, `categorical`, `datetime`) and returns a function handle that reads back the updated struct values.
 
 ## Related Projects
 - https://github.com/ehennestad/WidgetTable
