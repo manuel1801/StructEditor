@@ -1,6 +1,5 @@
 classdef StructEditorApp < matlab.apps.AppBase & ...
-        matlab.mixin.SetGetExactNames & ...
-        structeditor.mixin.HasTheme
+        matlab.mixin.SetGetExactNames
     
     properties (Access = private, Description = "Stylable UI Components")
         % UIFigure:
@@ -58,6 +57,11 @@ classdef StructEditorApp < matlab.apps.AppBase & ...
         LabelPosition (1,1) string {mustBeMember(LabelPosition, ["left", "above"])} = "left"
         LoadingHtmlSource
         EnableNestedStruct matlab.lang.OnOffSwitchState = 'off' 
+        Theme (1,1) string {mustBeMember(Theme, ["", "light", "dark", "dark-aubergine", "ndi", "default"])} = ""
+    end
+
+    properties (SetAccess = private)
+        ThemeObject (1,1) structeditor.theme.Theme = structeditor.enum.Theme.Light
     end
 
     properties (Hidden)
@@ -92,11 +96,7 @@ classdef StructEditorApp < matlab.apps.AppBase & ...
                 propValues.CloseOnExit
             end
             
-            if isfield(propValues, 'Theme')
-                theme = propValues.Theme; propValues = rmfield(propValues, 'Theme');
-            end
-
-            % Set properties (excluding Theme which is handled by HasTheme)
+            % Set properties
             obj.set(propValues)
 
             obj.Data = data;
@@ -116,12 +116,8 @@ classdef StructEditorApp < matlab.apps.AppBase & ...
             % Register app in MATLAB App Management (AppBase lifecycle)
             registerApp(obj, obj.UIFigure);
 
-            % Step 3: Initialize theme AFTER figure is created
-            % This automatically handles both R2025a+ and legacy versions
-            obj.initializeTheme(obj.UIFigure, theme);
-            
-            % Add callback to update custom themed components
-            obj.addThemeChangedCallback(@obj.onThemeChanged);
+            % Step 3: Resolve and apply theme
+            obj.ThemeObject = obj.resolveThemeObject(obj.Theme);
             % obj.createControls() Todo...
             % Create the UIControlContainer
             H = structeditor.UIControlContainer(obj.ControlPanel, obj.Data, ...
@@ -237,6 +233,12 @@ classdef StructEditorApp < matlab.apps.AppBase & ...
             obj.postSetOkButtonText()
         end
 
+        function set.Theme(obj, value)
+            obj.Theme = value;
+            obj.ThemeObject = obj.resolveThemeObject(value);
+            obj.onThemeChanged()
+        end
+
     end
 
     methods (Access = private) % Property post set methods
@@ -296,6 +298,20 @@ classdef StructEditorApp < matlab.apps.AppBase & ...
 
         function postSetOkButtonText(obj)
             obj.Footer.OkButtonText = obj.OkButtonText;
+        end
+
+        function themeObj = resolveThemeObject(~, themeName)
+            switch lower(string(themeName))
+                case "dark"
+                    themeObj = structeditor.enum.Theme.Dark;
+                case "dark-aubergine"
+                    themeObj = structeditor.enum.Theme.DarkAubergine;
+                case "ndi"
+                    themeObj = structeditor.enum.Theme.NDI;
+                otherwise
+                    % Includes "", "default", and "light"
+                    themeObj = structeditor.enum.Theme.Light;
+            end
         end
     end
 
